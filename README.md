@@ -4,6 +4,6 @@ A new Flutter project.
 
 ## Look
 
-<img src="./media/arc&spinAnimation.gif" alt="GIF Preview" width="375" height="637">
+<img src="./media/3d-likeanimation.gif" alt="GIF Preview" width="425" height="890">
 
 
