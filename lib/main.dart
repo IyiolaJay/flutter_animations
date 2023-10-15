@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math' show pi;
-import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 void main() {
   runApp(const MyApp());
@@ -17,146 +15,101 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
         primarySwatch: Colors.blue,
       ),
-      home: const BoxAnimation(),
+      home: const HeroAnimation(),
     );
   }
 }
 
-class BoxAnimation extends StatefulWidget {
-  const BoxAnimation({super.key});
+@immutable
+class Person {
+  final String icon;
+  final int age;
+  final String name;
 
-  @override
-  State<BoxAnimation> createState() => _BoxAnimationState();
+  const Person(this.icon, this.age, this.name);
 }
 
-class _BoxAnimationState extends State<BoxAnimation>
-    with TickerProviderStateMixin {
-  late AnimationController _xController;
-  late AnimationController _yController;
-  late AnimationController _zController;
-  late Tween<double> _animation;
+final List<Person> people = [
+  const Person("🙋🏽‍♀️", 20, "John"),
+  const Person("🙋🏽‍♂️", 23, "Mary"),
+  const Person("👲", 20, "Josh"),
+];
 
-  @override
-  void initState() {
-    _xController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 30));
+class HeroAnimation extends StatelessWidget {
+  const HeroAnimation({super.key});
 
-    _yController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 40));
-
-    _zController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 30));
-
-    _animation = Tween<double>(begin: 0, end: pi * 2);
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _xController.dispose();
-    _yController.dispose();
-    _zController.dispose();
-    super.dispose();
-  }
-
-  final _containerHeightWidth = 100.0;
   @override
   Widget build(BuildContext context) {
-    _xController
-      ..reset()
-      ..repeat();
-    _yController
-      ..reset()
-      ..repeat();
-    _zController
-      ..reset()
-      ..repeat();
-
     return Scaffold(
-      body: SafeArea(
+      appBar: AppBar(
+        title: const Text("People"),
+      ),
+      body: ListView.builder(
+        itemCount: people.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) {
+                  return DetailedPage(person: people[index]);
+                },
+              ));
+            },
+            leading: Hero(
+                flightShuttleBuilder: (flightContext, animation, flightDirection, fromHeroContext, toHeroContext) {
+                  switch(flightDirection){
+                    case HeroFlightDirection.push:
+                    return Material(
+                      color: Colors.transparent,
+                      child: ScaleTransition(
+                        scale: animation.drive(
+                          Tween<double>(
+                            begin: 0.0,
+                            end: 1.0
+                          ).chain(CurveTween(curve: Curves.fastOutSlowIn))
+                        ),
+                        child: toHeroContext.widget));
+                    case HeroFlightDirection.pop:
+                    return Material(
+                      color: Colors.transparent,
+                      child: fromHeroContext.widget);
+                  }
+                },
+                tag: people[index].name,
+                child: Text(
+                  people[index].icon,
+                  style: const TextStyle(fontSize: 35),
+                )),
+            title: Text(people[index].name),
+            subtitle: Text('${people[index].age} years old'),
+            trailing: const Icon(Icons.arrow_forward_ios),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class DetailedPage extends StatelessWidget {
+  final Person person;
+  const DetailedPage({super.key, required this.person});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: Hero(
+          tag: person.name,
+          child: Text(person.icon, style: const TextStyle(fontSize: 40),)),
+      ),
+      body: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(
-              height: 100,
-              width: double.infinity,
-            ),
-            AnimatedBuilder(
-              animation:
-                  Listenable.merge([_xController, _yController, _zController]),
-              builder: (context, child) {
-                return Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()
-                    ..rotateX(_animation.evaluate(_xController))
-                    ..rotateY(_animation.evaluate(_yController))
-                    ..rotateZ(_animation.evaluate(_zController)),
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: _containerHeightWidth,
-                        height: _containerHeightWidth,
-                        color: Colors.green,
-                      ),
-                      // back 
-                      Transform(
-                        alignment:Alignment.center,
-                        transform: Matrix4.identity()..translate(Vector3(0,0, -_containerHeightWidth)),
-                        child: Container(
-                          width: _containerHeightWidth,
-                          height: _containerHeightWidth,
-                          color: Colors.purple,
-                        ),
-                      ),
-                      // left
-                      Transform(
-                        alignment:Alignment.centerLeft,
-                        transform: Matrix4.identity()..rotateY(pi /2),
-                        child: Container(
-                          width: _containerHeightWidth,
-                          height: _containerHeightWidth,
-                          color: Colors.orange,
-                        ),
-                      ),
-
-                      //right
-                      Transform(
-                        alignment:Alignment.centerRight,
-                        transform: Matrix4.identity()..rotateY(-pi /2),
-                        child: Container(
-                          width: _containerHeightWidth,
-                          height: _containerHeightWidth,
-                          color: Colors.brown,
-                        ),
-                      ),
-                      // top
-                      Transform(
-                        alignment:Alignment.topCenter,
-                        transform: Matrix4.identity()..rotateX(-pi / 2),
-                        child: Container(
-                          width: _containerHeightWidth,
-                          height: _containerHeightWidth,
-                          color: Colors.blueAccent[400],
-                        ),
-                      ),
-                      
-                      //bottom
-                      Transform(
-                        alignment:Alignment.bottomCenter,
-                        transform: Matrix4.identity()..rotateX(pi /2),
-                        child: Container(
-                          width: _containerHeightWidth,
-                          height: _containerHeightWidth,
-                          color: Colors.red,
-                        ),
-                      ),
-
-
-                    ],
-                  ),
-                );
-              },
-            )
+            const SizedBox(height: 30),
+            Text(person.name),
+            const SizedBox(height: 30),
+            Text('${person.age} years old')
           ],
         ),
       ),
